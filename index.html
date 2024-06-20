@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOMO</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Custom Cursor */
+        .custom-cursor {
+            cursor: url('./assets/cursor-removebg-preview.png'), auto !important;
+        }
+
+        .fullscreen-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .area-overlay {
+            position: absolute;
+            /* border: 2px solid red; */
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(197, 255, 255);
+            background-color: rgba(197, 255, 255, 0.75);
+        }
+
+        .modal-content {
+            background-color: #c5fefe;
+            background-image: url(./assets/click.webp);
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Media Queries */
+        @media (min-width: 768px) {
+            #desktop-image {
+                display: block;
+            }
+        }
+
+        @media (max-width: 767px) {
+            #mobile-image {
+                display: block;
+            }
+        }
+
+        #music-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+        }
+
+        #music-controls img {
+            width: 50px;
+            height: 50px;
+        }
+
+        .icons {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        .icons img{
+            margin-bottom: 30px;
+            width: 75px;
+        }
+
+        @media screen and (max-width: 600px) {
+            
+        .icons img{
+            margin-bottom: 15px;
+            width: 20.5px;
+        }
+        }
+    </style>
+</head>
+
+<body class="custom-cursor">
+    <img src="./assets/desktop.gif" alt="Desktop Image" usemap="#desktop-map" class="fullscreen-img" id="desktop-image">
+    <img src="./assets/mobile.gif" alt="Mobile Image" usemap="#mobile-map" class="fullscreen-img" id="mobile-image">
+
+    <map name="desktop-map" id="desktop-map">
+        <area shape="rect" coords="290,100,420,250" href="javascript:void(0);" alt="Desktop Clickable Area"
+            id="desktop-clickable-area">
+    </map>
+
+    <map name="mobile-map" id="mobile-map">
+        <area shape="rect" coords="10,50,220,150" href="javascript:void(0);" alt="Mobile Clickable Area"
+            id="mobile-clickable-area">
+    </map>
+
+    <audio id="background-music" autoplay loop>
+        <source src="./assets//game-music-loop-7-145285.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div id="music-controls">
+        <img id="play-button" src="./assets/play.png" alt="Play" onclick="toggleMusic()">
+        <img id="pause-button" src="./assets/pause.png" alt="Pause" onclick="toggleMusic()" style="display: none;">
+    </div>
+
+    <div id="overlay-container"></div>
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="icons">
+                <a href="http://" target="_blank" rel="noopener noreferrer"> <img src="./assets/x.png" alt=""></a>
+                <a href="http://" target="_blank" rel="noopener noreferrer"> <img src="./assets/dexscreener.png" alt=""></a>
+                <a href="http://" target="_blank" rel="noopener noreferrer"> <img src="./assets/tg.png" alt=""></a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function resizeImageMap() {
+            var img;
+            var area;
+            var originalWidth;
+            var originalHeight;
+
+            if (window.innerWidth >= 768) {
+                img = document.getElementById('desktop-image');
+                area = document.getElementById('desktop-clickable-area');
+                originalWidth = 800; // Original width of your desktop image
+                originalHeight = 600; // Original height of your desktop image
+            } else {
+                img = document.getElementById('mobile-image');
+                area = document.getElementById('mobile-clickable-area');
+                originalWidth = 400; // Original width of your mobile image
+                originalHeight = 300; // Original height of your mobile image
+            }
+
+            var scaleX = window.innerWidth / originalWidth;
+            var scaleY = window.innerHeight / originalHeight;
+
+            var coords = area.getAttribute('coords').split(',');
+            var x1 = Math.round(coords[0] * scaleX);
+            var y1 = Math.round(coords[1] * scaleY);
+            var x2 = Math.round(coords[2] * scaleX);
+            var y2 = Math.round(coords[3] * scaleY);
+
+            // Adjust area coords
+            area.setAttribute('coords', [x1, y1, x2, y2].join(','));
+
+            // Create or update the overlay
+            var overlayContainer = document.getElementById('overlay-container');
+            overlayContainer.innerHTML = ''; // Clear previous overlays
+            var overlay = document.createElement('div');
+            overlay.className = 'area-overlay';
+            overlay.style.left = x1 + 'px';
+            overlay.style.top = y1 + 'px';
+            overlay.style.width = (x2 - x1) + 'px';
+            overlay.style.height = (y2 - y1) + 'px';
+            overlayContainer.appendChild(overlay);
+        }
+
+        function showModal() {
+            var modal = document.getElementById("myModal");
+            var span = document.getElementsByClassName("close")[0];
+
+            modal.style.display = "block";
+
+            span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+        }
+
+        document.getElementById('desktop-clickable-area').onclick = showModal;
+        document.getElementById('mobile-clickable-area').onclick = showModal;
+
+        window.onload = resizeImageMap;
+        window.onresize = resizeImageMap;
+    </script>
+
+    <script>
+        const backgroundMusic = document.getElementById('background-music');
+        const playButton = document.getElementById('play-button');
+        const pauseButton = document.getElementById('pause-button');
+
+        function toggleMusic() {
+            if (backgroundMusic.paused) {
+                backgroundMusic.play();
+                playButton.style.display = 'none';
+                pauseButton.style.display = 'block';
+            } else {
+                backgroundMusic.pause();
+                playButton.style.display = 'block';
+                pauseButton.style.display = 'none';
+            }
+        }
+
+    </script>
+</body>
+
+</html>
